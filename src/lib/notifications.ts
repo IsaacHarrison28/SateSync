@@ -11,73 +11,100 @@ Notifications.setNotificationHandler({
 });
 
 export async function requestPermissions(): Promise<boolean> {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  try {
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
 
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
 
-  if (finalStatus !== "granted") {
-    alert("Notifications permission denied. Tasks won’t be reminded.");
+    if (finalStatus !== "granted") {
+      alert(
+        "Notifications permission denied. You won't receive task reminders.",
+      );
+      return false;
+    }
+
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("task-reminders", {
+        name: "Task Reminders",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#2563eb",
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Permission request failed:", error);
     return false;
   }
+}
 
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "Default reminders",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#2563eb",
-    });
-  }
-
-  return true;
+interface ScheduleResult {
+  success: boolean;
+  notificationId?: string;
+  error?: string;
 }
 
 export async function scheduleTaskNotification(task: {
   id: string;
   title: string;
+  description?: string;
   dateTime: string;
-}) {
+}): Promise<ScheduleResult> {
   const triggerDate = new Date(task.dateTime);
+  const now = new Date();
 
-  if (triggerDate <= new Date()) {
-    console.warn("Cannot schedule past or current notification");
-    return;
+  if (triggerDate <= now) {
+    console.warn(`Task ${task.id} is in the past or now → skipping schedule`);
+    return { success: false, error: "Past or current time" };
   }
 
   try {
-    const trigger: Notifications.CalendarTriggerInput = {
-      type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-      year: triggerDate.getFullYear(),
-      month: triggerDate.getMonth(), // Note: 0-based (Jan = 0)
-      day: triggerDate.getDate(),
-      hour: triggerDate.getHours(),
-      minute: triggerDate.getMinutes(),
-      second: 0,
-      repeats: false,
-    };
+    await cancelTaskNotification(task.id);
 
-    await Notifications.scheduleNotificationAsync({
+    const notificationId = await Notifications.scheduleNotificationAsync({
       identifier: task.id,
+
       content: {
-        title: "Task Reminder",
-        body: `It's time to: ${task.title}`,
+        title: "Task Time! ✓",
+        body: task.title + (task.description ? ` — ${task.description}` : ""),
         data: { taskId: task.id },
+        sound: "default",
+        priority: Notifications.AndroidNotificationPriority.HIGH,
       },
-      trigger,
+
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+      },
     });
 
     console.log(
-      `Notification scheduled for ${task.title} at ${triggerDate.toLocaleString()}`,
+      `Notification scheduled → task: ${task.title}, at: ${triggerDate.toLocaleString()}, id: ${notificationId}`,
     );
+
+    return { success: true, notificationId };
   } catch (error) {
-    console.error("Schedule failed:", error);
+    console.error(
+      `Failed to schedule notification for task ${task.id}:`,
+      error,
+    );
+    return { success: false, error: String(error) };
   }
 }
 
-export async function cancelTaskNotification(taskId: string) {
-  await Notifications.cancelScheduledNotificationAsync(taskId);
+export async function cancelTaskNotification(
+  identifier: string,
+): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+    console.log(`Cancelled notification: ${identifier}`);
+  } catch (error) {
+    console.debug(`No notification to cancel for ${identifier}`);
+  }
 }

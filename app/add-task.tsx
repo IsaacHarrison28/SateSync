@@ -1,7 +1,4 @@
-import {
-  requestPermissions,
-  scheduleTaskNotification,
-} from "@/src/lib/notifications";
+import { requestPermissions } from "@/src/lib/notifications";
 import { useTaskStore } from "@/src/store/taskStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
@@ -22,12 +19,14 @@ export default function AddTask() {
   const addTask = useTaskStore((s) => s.addTask);
 
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [error, setError] = useState("");
 
-  const inputRef = useRef<TextInput>(null);
+  const titleInputRef = useRef<TextInput>(null);
+  const descInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     requestPermissions();
@@ -72,21 +71,25 @@ export default function AddTask() {
       return;
     }
 
-    if (date < new Date()) {
+    if (date <= new Date()) {
       setError("Please choose a future date/time");
       return;
     }
 
     setError("");
-    addTask(title.trim(), date);
 
-    await scheduleTaskNotification({
-      id: Date.now().toString(),
-      title: title.trim(),
-      dateTime: date.toISOString(),
-    });
+    try {
+      await addTask({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        dateTime: date.toISOString(),
+      });
 
-    router.back();
+      router.back();
+    } catch (err) {
+      console.error("Failed to add task:", err);
+      setError("Something went wrong. Try again.");
+    }
   };
 
   return (
@@ -103,24 +106,46 @@ export default function AddTask() {
             New Task
           </Text>
 
+          {/* Title */}
           <Text className="text-lg font-medium text-foreground mb-2">
             Task Title
           </Text>
           <TextInput
-            ref={inputRef}
-            className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-5 py-4 text-foreground text-base mb-8 min-h-[60px] max-h-[180px]"
+            ref={titleInputRef}
+            className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-5 py-4 text-foreground text-base mb-6 min-h-[60px]"
             placeholder="e.g. Call mom or buy groceries"
             placeholderTextColor="#9ca3af"
             value={title}
             onChangeText={setTitle}
             multiline
-            numberOfLines={4}
+            numberOfLines={2}
             textAlignVertical="top"
-            returnKeyType="done"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => descInputRef.current?.focus()}
+            style={{ paddingTop: 12 }}
+          />
+
+          {/* Description*/}
+          <Text className="text-lg font-medium text-foreground mb-2">
+            Description (optional)
+          </Text>
+          <TextInput
+            ref={descInputRef}
+            className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-5 py-4 text-foreground text-base mb-8 min-h-[120px] max-h-[240px]"
+            placeholder="Add details, location, people to bring, etc..."
+            placeholderTextColor="#9ca3af"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={6}
+            textAlignVertical="top"
+            returnKeyType="default"
             blurOnSubmit={true}
             style={{ paddingTop: 12 }}
           />
 
+          {/* Date & Time */}
           <Text className="text-lg font-medium text-foreground mb-2">
             When (Date + Time)
           </Text>
