@@ -1,7 +1,6 @@
 import { useTaskStore, useTodayTasks } from "@/src/store/taskStore";
-import { Ionicons } from "@expo/vector-icons"; // for icons (already in Expo)
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -11,26 +10,8 @@ import {
 } from "react-native";
 
 export default function TodayScreen() {
-  const todayTasks = useTodayTasks(); // ← our reactive selector (only pending + today)
+  const todayTasks = useTodayTasks();
   const router = useRouter();
-
-  // Optional: separate overdue vs upcoming for better UX
-  const { overdue, upcoming } = useMemo(() => {
-    const now = new Date();
-    const overdueList: typeof todayTasks = [];
-    const upcomingList: typeof todayTasks = [];
-
-    todayTasks.forEach((task) => {
-      const taskTime = new Date(task.datetime);
-      if (taskTime < now) {
-        overdueList.push(task);
-      } else {
-        upcomingList.push(task);
-      }
-    });
-
-    return { overdue: overdueList, upcoming: upcomingList };
-  }, [todayTasks]);
 
   const hasTasks = todayTasks.length > 0;
 
@@ -76,7 +57,7 @@ export default function TodayScreen() {
             style={styles.actionBtn}
             onPress={() => {
               const newTime = new Date(item.datetime);
-              newTime.setMinutes(newTime.getMinutes() + 15); // quick snooze 15 min
+              newTime.setMinutes(newTime.getMinutes() + 15);
               useTaskStore.getState().updateTask(item.id, {
                 datetime: newTime.toISOString(),
               });
@@ -121,7 +102,6 @@ export default function TodayScreen() {
         />
       )}
 
-      {/* Floating action button */}
       {hasTasks && (
         <TouchableOpacity
           style={styles.fab}
@@ -137,18 +117,18 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // iOS light bg
+    backgroundColor: "#F2F2F7",
     paddingHorizontal: 16,
   },
   header: {
     fontSize: 34,
     fontWeight: "700",
-    marginTop: 16,
+    marginTop: 50,
     marginBottom: 20,
     color: "#000",
   },
   listContent: {
-    paddingBottom: 100, // space for FAB
+    paddingBottom: 100,
   },
   taskCard: {
     backgroundColor: "white",

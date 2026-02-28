@@ -4,9 +4,9 @@ import { Platform } from "react-native";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
-    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowList: true,
   }),
 });
 
@@ -34,7 +34,7 @@ export async function requestPermissions(): Promise<
 
     return finalStatus;
   } catch (error) {
-    console.error("Permission request failed:", error);
+    console.error("[requestPermissions] Permission request failed", error);
     return "denied";
   }
 }
@@ -55,7 +55,11 @@ export async function scheduleTaskNotification(task: {
   const now = new Date();
 
   if (triggerDate <= now) {
-    console.warn(`Task ${task.id} is in the past or now → skipping schedule`);
+    console.warn("[scheduleTaskNotification] Skipped – time is past or now", {
+      taskId: task.id,
+      title: task.title,
+      requestedTime: task.dateTime,
+    });
     return { success: false, error: "Past or current time" };
   }
 
@@ -66,8 +70,9 @@ export async function scheduleTaskNotification(task: {
       identifier: task.id,
 
       content: {
-        title: "Task Time! ✓",
-        body: task.title + (task.description ? ` — ${task.description}` : ""),
+        title: "SateSync",
+        subtitle: task.title,
+        body: task.description || "It's time to start this task!",
         data: { taskId: task.id },
         sound: "default",
         priority: Notifications.AndroidNotificationPriority.HIGH,
@@ -79,14 +84,18 @@ export async function scheduleTaskNotification(task: {
       },
     });
 
-    console.log(
-      `Notification scheduled → task: ${task.title}, at: ${triggerDate.toLocaleString()}, id: ${notificationId}`,
-    );
+    console.info("[scheduleTaskNotification] Scheduled", {
+      taskId: task.id,
+      title: task.title,
+      at: triggerDate.toISOString(),
+      notificationId,
+    });
 
     return { success: true, notificationId };
   } catch (error) {
     console.error(
-      `Failed to schedule notification for task ${task.id}:`,
+      "[scheduleTaskNotification] Failed",
+      { taskId: task.id },
       error,
     );
     return { success: false, error: String(error) };
@@ -98,8 +107,8 @@ export async function cancelTaskNotification(
 ): Promise<void> {
   try {
     await Notifications.cancelScheduledNotificationAsync(identifier);
-    console.log(`Cancelled notification: ${identifier}`);
+    console.debug(`[cancel] Removed notification: ${identifier}`);
   } catch (error) {
-    console.debug(`No notification to cancel for ${identifier}`);
+    console.debug(`[cancel] No notification found for: ${identifier}`);
   }
 }
