@@ -10,7 +10,9 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function requestPermissions(): Promise<boolean> {
+export async function requestPermissions(): Promise<
+  "granted" | "denied" | "undetermined"
+> {
   try {
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
@@ -21,14 +23,7 @@ export async function requestPermissions(): Promise<boolean> {
       finalStatus = status;
     }
 
-    if (finalStatus !== "granted") {
-      alert(
-        "Notifications permission denied. You won't receive task reminders.",
-      );
-      return false;
-    }
-
-    if (Platform.OS === "android") {
+    if (Platform.OS === "android" && finalStatus === "granted") {
       await Notifications.setNotificationChannelAsync("task-reminders", {
         name: "Task Reminders",
         importance: Notifications.AndroidImportance.MAX,
@@ -37,10 +32,10 @@ export async function requestPermissions(): Promise<boolean> {
       });
     }
 
-    return true;
+    return finalStatus;
   } catch (error) {
     console.error("Permission request failed:", error);
-    return false;
+    return "denied";
   }
 }
 

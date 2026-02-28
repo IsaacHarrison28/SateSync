@@ -2,10 +2,11 @@ import { requestPermissions } from "@/src/lib/notifications";
 import { useTaskStore } from "@/src/store/taskStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Keyboard,
   Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -28,10 +29,6 @@ export default function AddTask() {
   const titleInputRef = useRef<TextInput>(null);
   const descInputRef = useRef<TextInput>(null);
 
-  useEffect(() => {
-    requestPermissions();
-  }, []);
-
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -50,9 +47,7 @@ export default function AddTask() {
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDate(Platform.OS === "ios");
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
+    if (selectedDate) setDate(selectedDate);
   };
 
   const onTimeChange = (event: any, selectedTime?: Date) => {
@@ -71,8 +66,17 @@ export default function AddTask() {
       return;
     }
 
-    if (date <= new Date()) {
-      setError("Please choose a future date/time");
+    const now = new Date();
+    if (date.getTime() <= now.getTime() + 60000) {
+      setError("Please choose a time at least 1 minute from now");
+      return;
+    }
+
+    const status = await requestPermissions();
+    if (status !== "granted") {
+      setError(
+        "Notifications are required to schedule tasks. Please enable them in Settings.",
+      );
       return;
     }
 
@@ -82,9 +86,8 @@ export default function AddTask() {
       await addTask({
         title: title.trim(),
         description: description.trim() || undefined,
-        dateTime: date.toISOString(),
+        datetime: date.toISOString(),
       });
-
       router.back();
     } catch (err) {
       console.error("Failed to add task:", err);
@@ -101,7 +104,12 @@ export default function AddTask() {
       }}
     >
       <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 p-6">
+        <ScrollView
+          className="flex-1"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 24, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
           <Text className="text-3xl font-bold text-foreground mb-8">
             New Task
           </Text>
@@ -123,16 +131,15 @@ export default function AddTask() {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => descInputRef.current?.focus()}
-            style={{ paddingTop: 12 }}
           />
 
-          {/* Description*/}
+          {/* Description */}
           <Text className="text-lg font-medium text-foreground mb-2">
             Description (optional)
           </Text>
           <TextInput
             ref={descInputRef}
-            className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-5 py-4 text-foreground text-base mb-8 min-h-[120px] max-h-[240px]"
+            className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-5 py-4 text-foreground text-base mb-8 min-h-[120px]"
             placeholder="Add details, location, people to bring, etc..."
             placeholderTextColor="#9ca3af"
             value={description}
@@ -142,7 +149,6 @@ export default function AddTask() {
             textAlignVertical="top"
             returnKeyType="default"
             blurOnSubmit={true}
-            style={{ paddingTop: 12 }}
           />
 
           {/* Date & Time */}
@@ -150,62 +156,74 @@ export default function AddTask() {
             When (Date + Time)
           </Text>
 
-          <View className="flex-row justify-between mb-8">
-            <TouchableOpacity
-              onPress={openDatePicker}
-              className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-5 mr-3 items-center"
-            >
-              <Text className="text-foreground text-base">
-                {date.toLocaleDateString([], {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </Text>
-            </TouchableOpacity>
+          {Platform.OS === "ios" ? (
+            <View className="mb-8">
+              <DateTimePicker
+                value={date}
+                mode="datetime"
+                display="inline"
+                onChange={(event, selected) => {
+                  if (selected) setDate(selected);
+                }}
+                minimumDate={new Date()}
+              />
+            </View>
+          ) : (
+            <>
+              <View className="flex-row justify-between mb-8">
+                <TouchableOpacity
+                  onPress={openDatePicker}
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-5 mr-3 items-center"
+                >
+                  <Text className="text-foreground text-base">
+                    {date.toLocaleDateString([], {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={openTimePicker}
-              className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-5 items-center"
-            >
-              <Text className="text-foreground text-base">
-                {date.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  onPress={openTimePicker}
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-5 items-center"
+                >
+                  <Text className="text-foreground text-base">
+                    {date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-          {showDate && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === "ios" ? "inline" : "default"}
-              onChange={onDateChange}
-              minimumDate={new Date()}
-            />
-          )}
+              {showDate && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
 
-          {showTime && (
-            <DateTimePicker
-              value={date}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={onTimeChange}
-              style={
-                Platform.OS === "ios"
-                  ? { width: "100%", height: 220 }
-                  : undefined
-              }
-            />
+              {showTime && (
+                <DateTimePicker
+                  value={date}
+                  mode="time"
+                  display="inline"
+                  onChange={onTimeChange}
+                />
+              )}
+            </>
           )}
 
           {error ? (
-            <Text className="text-red-500 text-base mb-4">{error}</Text>
+            <Text className="text-red-500 text-base mb-6">{error}</Text>
           ) : null}
 
-          <View className="flex-row justify-between mt-auto">
+          {/* Bottom buttons - pushed to bottom via mt-auto or Spacer */}
+          <View className="flex-row justify-between mt-auto pb-6">
             <TouchableOpacity
               onPress={() => {
                 dismissKeyboard();
@@ -232,7 +250,7 @@ export default function AddTask() {
               <Text className="text-white font-semibold text-xl">Schedule</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );

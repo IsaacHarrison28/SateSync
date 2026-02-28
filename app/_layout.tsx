@@ -1,5 +1,5 @@
+import "@/global.css";
 import { Stack } from "expo-router";
-import "../global.css";
 
 export default function RootLayout() {
   return (
@@ -9,8 +9,15 @@ export default function RootLayout() {
         animation: "slide_from_right",
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="add-task" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+      <Stack.Screen
+        name="add-task"
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }
