@@ -60,7 +60,7 @@ export default function AllTasksScreen() {
       item.status === "completed"
         ? "#34C759"
         : item.status === "ignored"
-          ? "#FF3B30" // red
+          ? "#FF3B30"
           : item.status === "missed"
             ? "#FF9500"
             : "#007AFF";
@@ -72,8 +72,10 @@ export default function AllTasksScreen() {
           item.status !== "pending" && styles.completedCard,
         ]}
         onPress={() => {
-          // Optional: navigate to detail/edit screen later
-          // router.push(`/task/${item.id}`);
+          router.push({
+            pathname: "/edit-task",
+            params: { id: item.id },
+          });
         }}
         activeOpacity={0.8}
       >

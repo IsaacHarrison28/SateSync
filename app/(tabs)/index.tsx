@@ -20,7 +20,16 @@ export default function TodayScreen() {
     const isOverdue = taskTime < new Date();
 
     return (
-      <View style={[styles.taskCard, isOverdue && styles.overdueCard]}>
+      <TouchableOpacity
+        style={[styles.taskCard, isOverdue && styles.overdueCard]}
+        onPress={() => {
+          router.push({
+            pathname: "/edit-task",
+            params: { id: item.id },
+          });
+        }}
+        activeOpacity={0.85}
+      >
         <View style={styles.taskInfo}>
           <Text style={[styles.taskTitle, isOverdue && styles.overdueTitle]}>
             {item.title}
@@ -73,7 +82,7 @@ export default function TodayScreen() {
             <Ionicons name="close-circle-outline" size={28} color="#FF3B30" />
           </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
