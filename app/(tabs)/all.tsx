@@ -1,8 +1,7 @@
-import { useToast } from "@/components/ToastProvider";
 import { Task, useTaskStore } from "@/src/store/taskStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import {
   Alert,
   SectionList,
@@ -21,19 +20,6 @@ interface Section {
 export default function AllTasksScreen() {
   const { tasks } = useTaskStore();
   const router = useRouter();
-  const { showToast } = useToast();
-  const prevTaskCount = useRef(tasks.length);
-
-  useEffect(() => {
-    if (tasks.length < prevTaskCount.current) {
-      showToast({
-        message: "Task deleted",
-        type: "info",
-        duration: 2500,
-      });
-    }
-    prevTaskCount.current = tasks.length;
-  }, [tasks]);
 
   const sections = useMemo(() => {
     const grouped = tasks.reduce<Record<string, Task[]>>((acc, task) => {
@@ -202,6 +188,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
+    marginTop: 40,
   },
   listContent: {
     paddingHorizontal: 16,

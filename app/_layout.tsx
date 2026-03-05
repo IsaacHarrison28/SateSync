@@ -52,7 +52,7 @@ function NotificationInitializer() {
           Alert.alert(
             "Welcome to SateSync",
             "This app can send you timely reminders for your tasks.\n\n" +
-              "We’ll ask for permission to show notifications — you can always change this in Settings.",
+              "We'll ask for permission to show notifications — you can always change this in Settings.",
             [{ text: "Continue", style: "default" }],
           );
         }
@@ -61,14 +61,14 @@ function NotificationInitializer() {
 
         if (status === "granted") {
           showToast({
-            message: "Notifications enabled – you'll get timely reminders",
+            message: "Notifications enabled - you'll get timely reminders",
             type: "success",
             duration: 3000,
           });
         } else {
           showToast({
             message:
-              "Reminders disabled – enable in Settings for notifications",
+              "Reminders disabled - enable in Settings for notifications",
             type: "error",
             duration: 5000,
           });
@@ -81,7 +81,7 @@ function NotificationInitializer() {
 
             Alert.alert(
               "Reminders Disabled",
-              "You won’t receive notifications when tasks are due.\n\n" +
+              "You won't receive notifications when tasks are due.\n\n" +
                 "To enable reminders, go to Settings → Notifications → SateSync and allow notifications.",
               [
                 { text: "Not Now", style: "cancel" },

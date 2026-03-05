@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function EditTask() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { tasks, updateTask } = useTaskStore();
+  const { tasks, updateTask, deleteTask } = useTaskStore();
   const { showToast } = useToast();
 
   const task = tasks.find((t) => t.id === id);
@@ -71,6 +71,12 @@ export default function EditTask() {
     } catch (err) {
       setError("Failed to update task");
       console.error("Update failed:", err);
+
+      showToast({
+        message: "Failed to update task",
+        type: "error",
+        duration: 4000,
+      });
     }
   };
 
@@ -83,18 +89,20 @@ export default function EditTask() {
         {
           text: "Delete",
           style: "destructive",
-
-          onPress: async () => {
+          onPress: () => {
             try {
-              useTaskStore.getState().deleteTask(task.id);
-              showToast({
-                message: "Task deleted",
-                type: "info",
-              });
+              deleteTask(task.id);
+
               router.back();
             } catch (err) {
               Alert.alert("Error", "Failed to delete task");
               console.error("Delete failed:", err);
+
+              showToast({
+                message: "Failed to delete task",
+                type: "error",
+                duration: 4000,
+              });
             }
           },
         },

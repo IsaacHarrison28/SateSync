@@ -90,13 +90,14 @@ export default function AddTask() {
         description: description.trim() || undefined,
         datetime: date.toISOString(),
       });
-      showToast({
-        message: "Task scheduled successfully",
-        type: "success",
-        duration: 2500,
-      });
+
       router.back();
     } catch (err) {
+      showToast({
+        message: "Task scheduling failed!",
+        type: "error",
+        duration: 2500,
+      });
       console.error("Failed to add task:", err);
       setError("Something went wrong. Try again.");
     }
