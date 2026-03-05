@@ -40,7 +40,6 @@ export const useTaskStore = create<TaskStore>()(
         try {
           const id = await Crypto.randomUUID();
 
-          // Ensure datetime is always set and valid
           let datetime = newTaskInput.datetime;
           if (!datetime && newTaskInput.date && newTaskInput.time) {
             datetime = `${newTaskInput.date}T${newTaskInput.time}:00.000Z`;
@@ -58,7 +57,6 @@ export const useTaskStore = create<TaskStore>()(
             status: "pending",
           };
 
-          // Optional: check permissions early
           const { status } = await Notifications.getPermissionsAsync();
           if (status !== "granted") {
             console.warn("[addTask] Notifications not granted yet");
@@ -89,7 +87,6 @@ export const useTaskStore = create<TaskStore>()(
           });
         } catch (err) {
           console.error("[addTask] Failed:", err);
-          // Optionally: show toast / alert to user here
         }
       },
 
