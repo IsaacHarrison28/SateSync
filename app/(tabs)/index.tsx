@@ -2,12 +2,14 @@ import { useTaskStore, useTodayTasks } from "@/src/store/taskStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 export default function TodayScreen() {
   const todayTasks = useTodayTasks();
@@ -19,70 +21,115 @@ export default function TodayScreen() {
     const taskTime = new Date(item.datetime);
     const isOverdue = taskTime < new Date();
 
-    return (
+    const renderRightActions = () => (
       <TouchableOpacity
-        style={[styles.taskCard, isOverdue && styles.overdueCard]}
+        style={styles.deleteAction}
         onPress={() => {
-          router.push({
-            pathname: "/edit-task",
-            params: { id: item.id },
-          });
+          Alert.alert(
+            "Delete Task",
+            "Are you sure you want to delete this task? This cannot be undone.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Delete",
+                style: "destructive",
+                onPress: () => {
+                  useTaskStore.getState().deleteTask(item.id);
+                },
+              },
+            ],
+          );
         }}
-        activeOpacity={0.85}
       >
-        <View style={styles.taskInfo}>
-          <Text style={[styles.taskTitle, isOverdue && styles.overdueTitle]}>
-            {item.title}
-          </Text>
-
-          <Text style={styles.taskTime}>
-            {taskTime.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </Text>
-
-          {item.description && (
-            <Text style={styles.taskDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => useTaskStore.getState().markAsCompleted(item.id)}
-          >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={28}
-              color="#34C759"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => {
-              const newTime = new Date(item.datetime);
-              newTime.setMinutes(newTime.getMinutes() + 15);
-              useTaskStore.getState().updateTask(item.id, {
-                datetime: newTime.toISOString(),
-              });
-            }}
-          >
-            <Ionicons name="time-outline" size={28} color="#FF9500" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => useTaskStore.getState().markAsIgnored(item.id)}
-          >
-            <Ionicons name="close-circle-outline" size={28} color="#FF3B30" />
-          </TouchableOpacity>
-        </View>
+        <Ionicons name="trash-outline" size={28} color="white" />
       </TouchableOpacity>
+    );
+
+    const renderLeftActions = () => (
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#34C759",
+          justifyContent: "center",
+          alignItems: "center",
+          width: 80,
+          borderTopLeftRadius: 16,
+          borderBottomLeftRadius: 16,
+        }}
+        onPress={() => useTaskStore.getState().markAsCompleted(item.id)}
+      >
+        <Ionicons name="checkmark" size={28} color="white" />
+      </TouchableOpacity>
+    );
+
+    return (
+      <Swipeable
+        renderRightActions={renderRightActions}
+        renderLeftActions={renderLeftActions}
+      >
+        <TouchableOpacity
+          style={[styles.taskCard, isOverdue && styles.overdueCard]}
+          onPress={() => {
+            router.push({
+              pathname: "/edit-task",
+              params: { id: item.id },
+            });
+          }}
+          activeOpacity={0.85}
+        >
+          <View style={styles.taskInfo}>
+            <Text style={[styles.taskTitle, isOverdue && styles.overdueTitle]}>
+              {item.title}
+            </Text>
+
+            <Text style={styles.taskTime}>
+              {taskTime.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </Text>
+
+            {item.description && (
+              <Text style={styles.taskDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => useTaskStore.getState().markAsCompleted(item.id)}
+            >
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={28}
+                color="#34C759"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => {
+                const newTime = new Date(item.datetime);
+                newTime.setMinutes(newTime.getMinutes() + 15);
+                useTaskStore.getState().updateTask(item.id, {
+                  datetime: newTime.toISOString(),
+                });
+              }}
+            >
+              <Ionicons name="time-outline" size={28} color="#FF9500" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => useTaskStore.getState().markAsIgnored(item.id)}
+            >
+              <Ionicons name="close-circle-outline" size={28} color="#FF3B30" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -209,5 +256,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+  },
+  deleteAction: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
   },
 });

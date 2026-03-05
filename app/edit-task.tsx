@@ -81,9 +81,10 @@ export default function EditTask() {
         {
           text: "Delete",
           style: "destructive",
+
           onPress: async () => {
             try {
-              await deleteTask(task.id);
+              useTaskStore.getState().deleteTask(task.id);
               router.back();
             } catch (err) {
               Alert.alert("Error", "Failed to delete task");
@@ -127,7 +128,6 @@ export default function EditTask() {
           >
             <Text style={styles.title}>Edit Task</Text>
 
-            {/* Delete button */}
             <TouchableOpacity
               onPress={handleDelete}
               style={styles.deleteButton}
@@ -135,7 +135,6 @@ export default function EditTask() {
               <Text style={styles.deleteButtonText}>Delete Task</Text>
             </TouchableOpacity>
 
-            {/* Title */}
             <Text style={styles.label}>Title</Text>
             <TextInput
               ref={titleRef}
@@ -149,7 +148,6 @@ export default function EditTask() {
               accessibilityHint="Enter the main title of your task"
             />
 
-            {/* Description */}
             <Text style={styles.label}>Description (optional)</Text>
             <TextInput
               value={description}
@@ -163,7 +161,6 @@ export default function EditTask() {
               accessibilityHint="Optional details about the task"
             />
 
-            {/* Date & Time */}
             <Text style={styles.label}>Date & Time</Text>
 
             {Platform.OS === "ios" ? (
@@ -230,7 +227,6 @@ export default function EditTask() {
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            {/* Action Buttons */}
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 onPress={() => router.back()}

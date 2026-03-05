@@ -3,12 +3,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import {
+  Alert,
   SectionList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 interface Section {
   title: string;
@@ -65,6 +67,30 @@ export default function AllTasksScreen() {
             ? "#FF9500"
             : "#007AFF";
 
+    const renderRightActions = () => (
+      <TouchableOpacity
+        style={styles.deleteAction}
+        onPress={() => {
+          Alert.alert(
+            "Delete Task",
+            "Are you sure you want to delete this task? This cannot be undone.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Delete",
+                style: "destructive",
+                onPress: () => {
+                  useTaskStore.getState().deleteTask(item.id);
+                },
+              },
+            ],
+          );
+        }}
+      >
+        <Ionicons name="trash-outline" size={28} color="white" />
+      </TouchableOpacity>
+    );
+
     return (
       <TouchableOpacity
         style={[
@@ -79,37 +105,39 @@ export default function AllTasksScreen() {
         }}
         activeOpacity={0.8}
       >
-        <View style={styles.taskContent}>
-          <View style={styles.timeContainer}>
-            <Text style={styles.time}>{timeStr}</Text>
-          </View>
+        <Swipeable renderRightActions={renderRightActions}>
+          <View style={styles.taskContent}>
+            <View style={styles.timeContainer}>
+              <Text style={styles.time}>{timeStr}</Text>
+            </View>
 
-          <View style={styles.mainContent}>
-            <Text
-              style={[
-                styles.title,
-                item.status !== "pending" && styles.completedTitle,
-              ]}
-              numberOfLines={1}
-            >
-              {item.title}
-            </Text>
-
-            {item.description && (
-              <Text style={styles.description} numberOfLines={2}>
-                {item.description}
+            <View style={styles.mainContent}>
+              <Text
+                style={[
+                  styles.title,
+                  item.status !== "pending" && styles.completedTitle,
+                ]}
+                numberOfLines={1}
+              >
+                {item.title}
               </Text>
-            )}
 
-            <Text style={[styles.status, { color: statusColor }]}>
-              {item.status
-                ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
-                : "Pending"}
-            </Text>
+              {item.description && (
+                <Text style={styles.description} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              )}
+
+              <Text style={[styles.status, { color: statusColor }]}>
+                {item.status
+                  ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
+                  : "Pending"}
+              </Text>
+            </View>
+
+            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
           </View>
-
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-        </View>
+        </Swipeable>
       </TouchableOpacity>
     );
   };
@@ -246,5 +274,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     fontWeight: "600",
+  },
+  deleteAction: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
   },
 });
