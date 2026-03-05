@@ -1,3 +1,4 @@
+import { useToast } from "@/components/ToastProvider";
 import { requestPermissions } from "@/src/lib/notifications";
 import { useTaskStore } from "@/src/store/taskStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -18,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AddTask() {
   const router = useRouter();
   const addTask = useTaskStore((s) => s.addTask);
+  const { showToast } = useToast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -87,6 +89,11 @@ export default function AddTask() {
         title: title.trim(),
         description: description.trim() || undefined,
         datetime: date.toISOString(),
+      });
+      showToast({
+        message: "Task scheduled successfully",
+        type: "success",
+        duration: 2500,
       });
       router.back();
     } catch (err) {

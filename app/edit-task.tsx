@@ -1,3 +1,4 @@
+import { useToast } from "@/components/ToastProvider";
 import { useTaskStore } from "@/src/store/taskStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -20,7 +21,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function EditTask() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { tasks, updateTask, deleteTask } = useTaskStore();
+  const { tasks, updateTask } = useTaskStore();
+  const { showToast } = useToast();
 
   const task = tasks.find((t) => t.id === id);
   if (!task) {
@@ -85,6 +87,10 @@ export default function EditTask() {
           onPress: async () => {
             try {
               useTaskStore.getState().deleteTask(task.id);
+              showToast({
+                message: "Task deleted",
+                type: "info",
+              });
               router.back();
             } catch (err) {
               Alert.alert("Error", "Failed to delete task");

@@ -1,3 +1,4 @@
+import { ToastProvider, useToast } from "@/components/ToastProvider";
 import "@/global.css";
 import { requestPermissions } from "@/src/lib/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,6 +8,40 @@ import { Alert, Linking } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ToastProvider>
+        <NotificationInitializer />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="add-task"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
+            name="edit-task"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+        </Stack>
+      </ToastProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+function NotificationInitializer() {
+  const { showToast } = useToast();
+
   useEffect(() => {
     const setupNotifications = async () => {
       try {
@@ -24,7 +59,20 @@ export default function RootLayout() {
 
         const status = await requestPermissions();
 
-        if (status !== "granted") {
+        if (status === "granted") {
+          showToast({
+            message: "Notifications enabled – you'll get timely reminders",
+            type: "success",
+            duration: 3000,
+          });
+        } else {
+          showToast({
+            message:
+              "Reminders disabled – enable in Settings for notifications",
+            type: "error",
+            duration: 5000,
+          });
+
           const hasSeenDenial = await AsyncStorage.getItem(
             "hasSeenNotificationDenial",
           );
@@ -46,37 +94,17 @@ export default function RootLayout() {
           }
         }
       } catch (error) {
-        console.error("[RootLayout] Notification setup failed", error);
+        console.error("[Notifications] Setup failed", error);
+        showToast({
+          message: "Failed to initialize notifications",
+          type: "error",
+          duration: 4000,
+        });
       }
     };
 
     setupNotifications();
   }, []);
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: "slide_from_right",
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="add-task"
-          options={{
-            presentation: "modal",
-            animation: "slide_from_bottom",
-          }}
-        />
-        <Stack.Screen
-          name="edit-task"
-          options={{
-            presentation: "modal",
-            animation: "slide_from_bottom",
-          }}
-        />
-      </Stack>
-    </GestureHandlerRootView>
-  );
+  return null;
 }
