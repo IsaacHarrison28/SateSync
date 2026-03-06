@@ -9,12 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,11 +24,20 @@ export default function EditTask() {
   const { tasks, updateTask, deleteTask } = useTaskStore();
   const { showToast } = useToast();
 
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
   const task = tasks.find((t) => t.id === id);
   if (!task) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <Text style={styles.notFoundText}>Task not found</Text>
+      <SafeAreaView
+        className={`flex-1 justify-center items-center ${isDark ? "bg-gray-950" : "bg-gray-100"}`}
+      >
+        <Text
+          className={`text-lg ${isDark ? "text-gray-300" : "text-gray-600"}`}
+        >
+          Task not found
+        </Text>
       </SafeAreaView>
     );
   }
@@ -92,7 +101,6 @@ export default function EditTask() {
           onPress: () => {
             try {
               deleteTask(task.id);
-
               router.back();
             } catch (err) {
               Alert.alert("Error", "Failed to delete task");
@@ -130,55 +138,83 @@ export default function EditTask() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        className={`flex-1 ${isDark ? "bg-gray-950" : "bg-gray-100"}`}
+      >
         <KeyboardAvoidingView
-          style={styles.flex1}
+          className="flex-1"
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 20}
         >
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ padding: 24, paddingBottom: 60 }}
           >
-            <Text style={styles.title}>Edit Task</Text>
+            <Text
+              className={`text-4xl font-bold mb-7 ${isDark ? "text-gray-100" : "text-gray-900"}`}
+            >
+              Edit Task
+            </Text>
 
             <TouchableOpacity
               onPress={handleDelete}
-              style={styles.deleteButton}
+              className="self-start mb-6 px-3 py-2"
             >
-              <Text style={styles.deleteButtonText}>Delete Task</Text>
+              <Text className="text-red-500 text-base font-medium">
+                Delete Task
+              </Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Title</Text>
+            <Text
+              className={`text-base font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+            >
+              Title
+            </Text>
             <TextInput
               ref={titleRef}
               value={title}
               onChangeText={setTitle}
               placeholder="What needs to be done?"
-              placeholderTextColor="#999"
-              style={styles.input}
+              placeholderTextColor="#9ca3af"
+              className={`border rounded-xl px-4 py-4 text-base mb-5 ${
+                isDark
+                  ? "bg-gray-800 border-gray-600 text-gray-100"
+                  : "bg-white border-gray-300 text-gray-900"
+              }`}
               returnKeyType="next"
               accessibilityLabel="Task title"
               accessibilityHint="Enter the main title of your task"
             />
 
-            <Text style={styles.label}>Description (optional)</Text>
+            <Text
+              className={`text-base font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+            >
+              Description (optional)
+            </Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Add details, notes, location..."
-              placeholderTextColor="#999"
+              placeholderTextColor="#9ca3af"
               multiline
               numberOfLines={4}
-              style={[styles.input, styles.textArea]}
+              className={`border rounded-xl px-4 py-4 text-base mb-5 min-h-[100px] text-align-vertical-top ${
+                isDark
+                  ? "bg-gray-800 border-gray-600 text-gray-100"
+                  : "bg-white border-gray-300 text-gray-900"
+              }`}
               accessibilityLabel="Task description"
               accessibilityHint="Optional details about the task"
             />
 
-            <Text style={styles.label}>Date & Time</Text>
+            <Text
+              className={`text-base font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+            >
+              Date & Time
+            </Text>
 
             {Platform.OS === "ios" ? (
-              <View style={styles.iosPickerContainer}>
+              <View className="mb-6 items-center">
                 <DateTimePicker
                   value={date}
                   mode="datetime"
@@ -189,12 +225,18 @@ export default function EditTask() {
               </View>
             ) : (
               <>
-                <View style={styles.androidPickerRow}>
+                <View className="flex-row gap-3 mb-5">
                   <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
-                    style={styles.pickerButton}
+                    className={`flex-1 px-4 py-4 rounded-xl border items-center ${
+                      isDark
+                        ? "bg-gray-800 border-gray-600"
+                        : "bg-white border-gray-300"
+                    }`}
                   >
-                    <Text style={styles.pickerButtonText}>
+                    <Text
+                      className={`${isDark ? "text-gray-100" : "text-gray-900"} text-base font-medium`}
+                    >
                       {date.toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",
@@ -206,9 +248,15 @@ export default function EditTask() {
 
                   <TouchableOpacity
                     onPress={() => setShowTimePicker(true)}
-                    style={styles.pickerButton}
+                    className={`flex-1 px-4 py-4 rounded-xl border items-center ${
+                      isDark
+                        ? "bg-gray-800 border-gray-600"
+                        : "bg-white border-gray-300"
+                    }`}
                   >
-                    <Text style={styles.pickerButtonText}>
+                    <Text
+                      className={`${isDark ? "text-gray-100" : "text-gray-900"} text-base font-medium`}
+                    >
                       {date.toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
@@ -239,21 +287,33 @@ export default function EditTask() {
               </>
             )}
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? (
+              <Text className="text-red-500 text-base my-3">{error}</Text>
+            ) : null}
 
-            <View style={styles.buttonRow}>
+            <View className="flex-row gap-3 mt-8">
               <TouchableOpacity
                 onPress={() => router.back()}
-                style={[styles.button, styles.cancelButton]}
+                className={`flex-1 py-4 rounded-xl items-center ${
+                  isDark ? "bg-gray-700" : "bg-gray-200"
+                }`}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text
+                  className={`${isDark ? "text-gray-100" : "text-gray-800"} text-base font-semibold`}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleSave}
-                style={[styles.button, styles.saveButton]}
+                className={`flex-1 py-4 rounded-xl items-center ${
+                  isDark ? "bg-blue-500" : "bg-blue-600"
+                }`}
               >
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Text className="text-white text-base font-semibold">
+                  Save Changes
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -262,118 +322,3 @@ export default function EditTask() {
     </TouchableWithoutFeedback>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  flex1: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 60,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  notFoundText: {
-    fontSize: 18,
-    color: "#666",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 28,
-  },
-  deleteButton: {
-    alignSelf: "flex-start",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 24,
-  },
-  deleteButtonText: {
-    color: "#ff3b30",
-    fontSize: 17,
-    fontWeight: "500",
-  },
-  label: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d0d0d0",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 17,
-    backgroundColor: "white",
-    marginBottom: 20,
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-  iosPickerContainer: {
-    marginBottom: 24,
-    alignItems: "center",
-  },
-  androidPickerRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
-  },
-  pickerButton: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#d0d0d0",
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  errorText: {
-    color: "#ff3b30",
-    fontSize: 15,
-    marginVertical: 12,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 32,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#e0e0e0",
-  },
-  cancelButtonText: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#333",
-  },
-  saveButton: {
-    backgroundColor: "#007AFF",
-  },
-  saveButtonText: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "white",
-  },
-});

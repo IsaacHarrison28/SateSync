@@ -5,10 +5,10 @@ import { useMemo } from "react";
 import {
   Alert,
   SectionList,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
@@ -20,6 +20,16 @@ interface Section {
 export default function AllTasksScreen() {
   const { tasks } = useTaskStore();
   const router = useRouter();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
+  // useEffect(() => {
+  //   const clearMemory = async () => {
+  //     await AsyncStorage.clear();
+  //     console.log("Memory cleared");
+  //   };
+  //   clearMemory();
+  // });
 
   const sections = useMemo(() => {
     const grouped = tasks.reduce<Record<string, Task[]>>((acc, task) => {
@@ -69,7 +79,7 @@ export default function AllTasksScreen() {
 
     const renderRightActions = () => (
       <TouchableOpacity
-        style={styles.deleteAction}
+        className="bg-red-600 justify-center items-center w-20 rounded-tr-2xl rounded-br-2xl"
         onPress={() => {
           Alert.alert(
             "Delete Task",
@@ -93,10 +103,11 @@ export default function AllTasksScreen() {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.taskCard,
-          item.status !== "pending" && styles.completedCard,
-        ]}
+        className={`
+          rounded-2xl mb-3 p-4 shadow-sm
+          ${isDark ? "bg-gray-800 shadow-gray-900/30" : "bg-white shadow-gray-200/50"}
+          ${item.status !== "pending" ? "opacity-75" : ""}
+        `}
         onPress={() => {
           router.push({
             pathname: "/edit-task",
@@ -106,36 +117,51 @@ export default function AllTasksScreen() {
         activeOpacity={0.8}
       >
         <Swipeable renderRightActions={renderRightActions}>
-          <View style={styles.taskContent}>
-            <View style={styles.timeContainer}>
-              <Text style={styles.time}>{timeStr}</Text>
+          <View className="flex-row items-center">
+            <View className="w-[60px] items-center">
+              <Text
+                className={`text-base font-medium ${isDark ? "text-blue-400" : "text-blue-600"}`}
+              >
+                {timeStr}
+              </Text>
             </View>
 
-            <View style={styles.mainContent}>
+            <View className="flex-1 ml-4">
               <Text
-                style={[
-                  styles.title,
-                  item.status !== "pending" && styles.completedTitle,
-                ]}
+                className={`
+                  text-base font-semibold
+                  ${isDark ? "text-gray-100" : "text-gray-900"}
+                  ${item.status !== "pending" ? "line-through text-gray-500 dark:text-gray-400" : ""}
+                `}
                 numberOfLines={1}
               >
                 {item.title}
               </Text>
 
               {item.description && (
-                <Text style={styles.description} numberOfLines={2}>
+                <Text
+                  className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                  numberOfLines={2}
+                >
                   {item.description}
                 </Text>
               )}
 
-              <Text style={[styles.status, { color: statusColor }]}>
+              <Text
+                className="text-xs mt-1.5 font-medium"
+                style={{ color: statusColor }}
+              >
                 {item.status
                   ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
                   : "Pending"}
               </Text>
             </View>
 
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isDark ? "#6B7280" : "#C7C7CC"}
+            />
           </View>
         </Swipeable>
       </TouchableOpacity>
@@ -143,22 +169,40 @@ export default function AllTasksScreen() {
   };
 
   const renderSectionHeader = ({ section }: { section: Section }) => (
-    <Text style={styles.sectionHeader}>{section.title}</Text>
+    <Text
+      className={`text-base font-semibold mt-6 mb-2 px-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+    >
+      {section.title}
+    </Text>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.screenTitle}>All Tasks</Text>
+    <View className={`flex-1 ${isDark ? "bg-gray-950" : "bg-gray-100"}`}>
+      <Text
+        className={`text-4xl font-bold px-5 pt-4 pb-3 mt-10 ${isDark ? "text-gray-100" : "text-gray-900"}`}
+      >
+        All Tasks
+      </Text>
 
       {tasks.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="list-outline" size={80} color="#C7C7CC" />
-          <Text style={styles.emptyText}>No tasks scheduled yet</Text>
+        <View className="flex-1 justify-center items-center px-10">
+          <Ionicons
+            name="list-outline"
+            size={80}
+            color={isDark ? "#6B7280" : "#C7C7CC"}
+          />
+          <Text
+            className={`text-lg text-center mt-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+          >
+            No tasks scheduled yet
+          </Text>
           <TouchableOpacity
-            style={styles.addButton}
+            className={`mt-8 py-4 px-8 rounded-xl ${isDark ? "bg-blue-500" : "bg-blue-600"}`}
             onPress={() => router.push("/add-task")}
           >
-            <Text style={styles.addButtonText}>Create Your First Task</Text>
+            <Text className="text-white text-base font-semibold">
+              Create Your First Task
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -167,7 +211,7 @@ export default function AllTasksScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderTask}
           renderSectionHeader={renderSectionHeader}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
         />
@@ -175,113 +219,3 @@ export default function AllTasksScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
-  screenTitle: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#000",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    marginTop: 40,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 80,
-  },
-  sectionHeader: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#8E8E93",
-    marginTop: 24,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  taskCard: {
-    backgroundColor: "white",
-    borderRadius: 14,
-    marginBottom: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  completedCard: {
-    opacity: 0.75,
-  },
-  taskContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timeContainer: {
-    width: 60,
-    alignItems: "center",
-  },
-  time: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#007AFF",
-  },
-  mainContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#000",
-  },
-  completedTitle: {
-    textDecorationLine: "line-through",
-    color: "#8E8E93",
-  },
-  description: {
-    fontSize: 15,
-    color: "#636366",
-    marginTop: 4,
-  },
-  status: {
-    fontSize: 13,
-    marginTop: 6,
-    fontWeight: "500",
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: "#8E8E93",
-    textAlign: "center",
-    marginTop: 16,
-    marginBottom: 32,
-  },
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-  },
-  addButtonText: {
-    color: "white",
-    fontSize: 17,
-    fontWeight: "600",
-  },
-  deleteAction: {
-    backgroundColor: "#FF3B30",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-});
