@@ -1,14 +1,35 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowList: true,
-  }),
-});
+function truncateDescription(desc?: string, maxLength = 100): string {
+  if (!desc) return "";
+  if (desc.length <= maxLength) return desc;
+  return desc.substring(0, maxLength - 3) + "...";
+}
+
+export async function setupNotificationActions() {
+  try {
+    await Notifications.setNotificationCategoryAsync("task-reminder", [
+      {
+        identifier: "mark-done",
+        buttonTitle: "Mark Done",
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+      {
+        identifier: "snooze-15",
+        buttonTitle: "Snooze 15 min",
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+    ]);
+    console.log("[Notifications] Action category 'task-reminder' registered");
+  } catch (error) {
+    console.error("[Notifications] Failed to set category", error);
+  }
+}
 
 export async function requestPermissions(): Promise<
   "granted" | "denied" | "undetermined"
@@ -23,13 +44,20 @@ export async function requestPermissions(): Promise<
       finalStatus = status;
     }
 
-    if (Platform.OS === "android" && finalStatus === "granted") {
-      await Notifications.setNotificationChannelAsync("task-reminders", {
-        name: "Task Reminders",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#2563eb",
-      });
+    if (finalStatus === "granted") {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("task-reminders", {
+          name: "Task Reminders",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#2563eb",
+          bypassDnd: true,
+          lockscreenVisibility:
+            Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+      }
+
+      await setupNotificationActions();
     }
 
     return finalStatus;
@@ -38,6 +66,16 @@ export async function requestPermissions(): Promise<
     return "denied";
   }
 }
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 interface ScheduleResult {
   success: boolean;
@@ -66,16 +104,24 @@ export async function scheduleTaskNotification(task: {
   try {
     await cancelTaskNotification(task.id);
 
+    const shortDesc = truncateDescription(task.description, 100);
+
     const notificationId = await Notifications.scheduleNotificationAsync({
       identifier: task.id,
 
       content: {
-        title: "SateSync",
-        subtitle: task.title,
-        body: task.description || "It's time to start this task!",
+        title: task.title,
+        body: shortDesc || "It's time to start this task!",
         data: { taskId: task.id },
+
         sound: "default",
         priority: Notifications.AndroidNotificationPriority.HIGH,
+
+        categoryIdentifier: "task-reminder",
+
+        ...(Platform.OS === "android" && {
+          color: "#2563eb",
+        }),
       },
 
       trigger: {
@@ -87,6 +133,7 @@ export async function scheduleTaskNotification(task: {
     console.info("[scheduleTaskNotification] Scheduled", {
       taskId: task.id,
       title: task.title,
+      bodyPreview: shortDesc,
       at: triggerDate.toISOString(),
       notificationId,
     });

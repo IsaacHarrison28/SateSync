@@ -2,7 +2,7 @@ import { useToast } from "@/components/ToastProvider";
 import { useTaskStore } from "@/src/store/taskStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -50,10 +50,6 @@ export default function EditTask() {
   const [error, setError] = useState("");
 
   const titleRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    titleRef.current?.focus();
-  }, []);
 
   const handleSave = async () => {
     if (!title.trim()) {

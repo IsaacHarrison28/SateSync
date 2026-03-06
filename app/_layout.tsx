@@ -1,7 +1,9 @@
 import { ToastProvider, useToast } from "@/components/ToastProvider";
 import "@/global.css";
 import { requestPermissions } from "@/src/lib/notifications";
+import { useTaskStore } from "@/src/store/taskStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { Alert, Linking } from "react-native";
@@ -104,6 +106,53 @@ function NotificationInitializer() {
     };
 
     setupNotifications();
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const actionId = response.actionIdentifier;
+        const taskId = response.notification.request.content.data?.taskId as
+          | string
+          | undefined;
+
+        if (!taskId) {
+          console.warn("Notification response missing taskId", response);
+          return;
+        }
+
+        if (actionId === "mark-done") {
+          useTaskStore.getState().markAsCompleted(taskId);
+
+          Notifications.cancelScheduledNotificationAsync(taskId);
+
+          showToast({
+            message: "Task marked as done!",
+            type: "success",
+            duration: 3000,
+          });
+
+          console.log(`[Notification Action] Task ${taskId} marked done`);
+        } else if (actionId === "snooze-15") {
+          const newTime = new Date();
+          newTime.setMinutes(newTime.getMinutes() + 15);
+
+          useTaskStore.getState().updateTask(taskId, {
+            datetime: newTime.toISOString(),
+          });
+
+          showToast({
+            message: "Task snoozed for 15 minutes",
+            type: "info",
+            duration: 4000,
+          });
+
+          console.log(`[Notification Action] Task ${taskId} snoozed 15 min`);
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   return null;

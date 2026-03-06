@@ -60,7 +60,6 @@ export const useTaskStore = create<TaskStore>()(
           const { status } = await Notifications.getPermissionsAsync();
           if (status !== "granted") {
             console.warn("[addTask] Notifications not granted yet");
-            // You could request here, but better to handle at app start / before add
           }
 
           const result = await scheduleTaskNotification({
